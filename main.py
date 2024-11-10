@@ -7,7 +7,9 @@ try:
     import socket
     import queue
 
-except ModuleNotFoundError:
+except ModuleNotFoundError as e:
+    print(e)
+
     os.system("pip install requests")
     os.system("pip install fake_useragent")
     exec(open(__file__, "r", encoding="utf-8").read())
@@ -32,7 +34,7 @@ queue_data = {
 
 class Traffic:
     def __init__(self, site):
-        self.default_port = 80
+        self.default_port = 443
         self.site = site
         # self.checking()
         self.dataset()
@@ -57,28 +59,33 @@ class Traffic:
         return ua.random
 
     def fetch(self, thread_id):
-        print(f"{red}[{white}Thread id{red}] : {magenta}{thread_id} {yellow}| {magenta}{self.site}")
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((self.site, self.default_port))
-            ua = self.rua()
-            request = f"""
-                GET / HTTP/1.1\r\n
-                accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7\r\n
-                Host: {self.site}\r\n
-                dnt: 1\r\n
-                Connection: keep-alive\r\n
-                User-Agent: {ua}\r\n
-                \r\n
-            """
-            s.sendall(request.encode())
-            response = b""
-            while True:
-                data = s.recv(1024)
-                if not data:
-                    break
-                response += data
+        # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        #     s.connect((self.site, self.default_port))
+        #     ua = self.rua()
+        #     request = f"""
+        #         GET / HTTP/1.1\r\n
+        #         Host: {self.site}\r\n
+        #         Connection: close\r\n
+        #         \r\n
+        #     """
+        #     s.sendall(request.encode())
 
+        #     response = b""
+        #     while True:
+        #         data = s.recv(1024)
+        #         if not data:
+        #             break
+        #         response += data
+        #     print(response)
+        if "https://" not in self.site:
+            self.site = "https://" + self.site
+        response = requests.get(self.site, headers={"User-Agent" : self.rua()})
+        print(f"{red}[{white}Thread id{red}] : {magenta}{thread_id} {yellow}| {magenta}{self.site} | {response.status_code}")
+        
+        return
+    
     def multithreading(self):
+        # input(self.fetch("1"))
         thread_arr = [None for i in range(self.dataset["thread"])]  
         index = 0
         while True:
